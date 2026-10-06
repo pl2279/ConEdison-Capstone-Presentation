@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Records Behind the Pause — Con Edison Capstone</title>
+<style>
+  :root{
+    --bg:#0B0F17; --bg2:#0E1420; --panel:rgba(255,255,255,.045); --line:rgba(255,255,255,.10);
+    --ink:#F2F4F8; --muted:#9AA6B8; --dim:#6B7688;
+    --green:#34D399; --amber:#FBBF24; --red:#F87171;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:#000;height:100%;overflow:hidden;font-family:var(--sans);color:var(--ink)}
+  #stage{position:fixed;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center center;transform:translate(-50%,-50%) scale(1)}
+  .slide{position:absolute;inset:0;background:var(--bg);padding:72px 96px;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .25s}
+  .slide.active{opacity:1;pointer-events:auto}
+  /* ---------- shared atoms ---------- */
+  .kicker{font-size:20px;letter-spacing:.22em;text-transform:uppercase;color:var(--green);font-weight:600;margin-bottom:18px}
+  h1{font-size:74px;line-height:1.06;font-weight:750;letter-spacing:-.02em;max-width:1600px}
+  h2{font-size:52px;line-height:1.08;font-weight:720;letter-spacing:-.015em}
+  .lead{font-size:30px;line-height:1.45;color:var(--muted);max-width:1560px}
+  .big{font-size:44px;line-height:1.3;font-weight:600}
+  .mono{font-family:var(--mono)}
+  .chip{display:inline-block;padding:6px 16px;border:1px solid var(--line);border-radius:999px;font-size:22px;color:var(--muted);background:var(--panel);white-space:nowrap}
+  .g{color:var(--green)} .a{color:var(--amber)} .r{color:var(--red)} .dim{color:var(--dim)}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .timechip{position:absolute;bottom:34px;right:96px;font-size:17px;color:var(--dim);font-family:var(--mono);letter-spacing:.08em}
+  .slidenum{position:absolute;bottom:34px;left:96px;font-size:17px;color:var(--dim);font-family:var(--mono);letter-spacing:.08em}
+  /* progress */
+  #bar{position:fixed;top:0;left:0;height:4px;background:var(--green);width:10%;z-index:50;transition:width .2s}
+  /* notes */
+  #notes{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);width:1500px;max-height:300px;overflow:auto;background:#111827;border:1px solid var(--line);border-radius:14px;padding:22px 28px;font-size:20px;line-height:1.5;color:#D7DEE8;display:none;z-index:60;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+  .slide .notes{display:none}
+  #notes.show{display:block}
+  #notes .t{color:var(--green);font-size:15px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px;font-weight:600}
+  /* arrows */
+  .navbtn{position:fixed;bottom:30px;z-index:55;width:52px;height:52px;border-radius:50%;border:1px solid var(--line);background:rgba(15,20,30,.85);color:var(--ink);font-size:22px;cursor:pointer;transition:background .15s}
+  .navbtn:hover{background:#1a2333}
+  #prev{right:150px} #next{right:84px}
+  #hint{position:fixed;bottom:36px;left:96px;z-index:55;font-size:15px;color:#4E5868;font-family:var(--mono)}
+  @media print{
+    html,body{overflow:visible;background:#fff}
+    #stage{position:static;transform:none;width:auto}
+    .slide{position:relative;opacity:1;pointer-events:auto;width:1920px;height:1080px;page-break-after:always;background:#fff;color:#111}
+    .slide .kicker{color:#059669} .g{color:#059669} .r{color:#dc2626} .a{color:#b45309}
+    #bar,#notes,.navbtn,#hint,.timechip{display:none}
+  }
+  /* ---------- slide 1 cover ---------- */
+  #s1{justify-content:center}
+  #s1 .psc{font-size:108px;line-height:1.02;font-weight:800;letter-spacing:-.02em;margin:26px 0 10px}
+  #s1 .psc span{color:var(--red)}
+  #s1 .sub{font-size:26px;color:var(--muted);margin-bottom:70px}
+  .coverfoot{display:flex;gap:28px;margin-top:auto;flex-wrap:wrap}
+  .coverfoot .chip{font-size:24px;padding:10px 22px}
+  /* ---------- slide 2 chain ---------- */
+  .cols2{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;margin-top:30px;flex:1}
+  .chain{display:flex;flex-direction:column;gap:0;justify-content:center}
+  .chain .node{display:flex;align-items:center;gap:18px;padding:16px 24px;border:1px solid var(--line);border-radius:12px;background:var(--panel);font-size:26px;font-weight:600}
+  .chain .node small{color:var(--dim);font-weight:400;font-size:18px;font-family:var(--mono)}
+  .chain .node .dot{width:10px;height:10px;border-radius:50%;background:var(--green);flex:none}
+  .chain .arr{height:34px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:16px;font-family:var(--mono)}
+  .chain .arr:before{content:"↓";font-size:22px}
+  .dirt{display:flex;flex-direction:column;gap:16px;justify-content:center}
+  .dirt .row{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:18px 22px}
+  .dirt .row .k{font-size:17px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+  .dirt .row .v{font-family:var(--mono);font-size:24px}
+  .factband{margin-top:26px;border:1px solid rgba(52,211,153,.35);background:rgba(52,211,153,.07);border-radius:14px;padding:22px 30px;font-size:27px;line-height:1.4}
+  .factband b{color:var(--green)}
+  /* ---------- slide 3 ideation ---------- */
+  .ideas{display:flex;flex-direction:column;gap:14px;margin-top:34px;flex:1}
+  .idea{display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:baseline;padding:16px 24px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+  .idea .name{font-size:27px;font-weight:650}
+  .idea .why{font-size:22px;color:var(--muted)}
+  .idea.dead .name{color:var(--dim);text-decoration:line-through;text-decoration-color:#4E5868}
+  .idea.win{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.07)}
+  .idea.win .name{color:var(--green)}
+  .idea .tag{font-size:17px;font-family:var(--mono);color:var(--dim)}
+  /* ---------- slide 4 failures ---------- */
+  .fails{display:flex;flex-direction:column;gap:14px;margin-top:34px;flex:1}
+  .fail{display:grid;grid-template-columns:64px 1fr 1fr;gap:26px;align-items:center;padding:18px 26px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+  .fail .n{font-family:var(--mono);font-size:26px;color:var(--red);font-weight:700}
+  .fail .what{font-size:24px;line-height:1.35}
+  .fail .fix{font-size:22px;color:var(--muted);line-height:1.35}
+  .fail .fix b{color:var(--green);font-weight:600}
+  /* ---------- slide 5 solution ---------- */
+  .flow{display:flex;align-items:stretch;gap:0;margin:44px 0 40px}
+  .flow .step{flex:1;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:22px 24px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:8px}
+  .flow .step .t{font-size:23px;font-weight:650}
+  .flow .step .d{font-size:19px;color:var(--muted);line-height:1.35}
+  .flow .arrow{align-self:center;color:var(--dim);font-size:30px;padding:0 14px;font-family:var(--mono)}
+  .flow .step.hot{border-color:rgba(52,211,153,.45)}
+  .solverow{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  .solverow .box{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:22px 28px;font-size:24px;line-height:1.45}
+  .solverow .box b{color:var(--green)}
+  /* ---------- slide 6 easy case ---------- */
+  .easywrap{display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:34px;flex:1}
+  .rawbox{border:1px solid var(--line);border-radius:14px;background:#0A0E16;padding:30px}
+  .rawbox .lbl{font-size:17px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px}
+  .rawline{font-family:var(--mono);font-size:27px;line-height:1.55}
+  .expect{display:flex;flex-direction:column;gap:12px}
+  .expect .e{display:flex;gap:16px;align-items:baseline;font-size:26px}
+  .expect .e .k{color:var(--dim);width:190px;flex:none;font-size:20px;text-transform:uppercase;letter-spacing:.05em}
+  .verdictline{margin-top:20px;font-size:26px}
+  .modelchips{display:flex;gap:16px;margin-top:18px;flex-wrap:wrap}
+  /* ---------- slide 7 table ---------- */
+  #s7{padding-bottom:56px}
+  .casestrip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px}
+  .casestrip .c{font-family:var(--mono);font-size:15.5px;line-height:1.3;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel);color:var(--muted)}
+  .casestrip .c b{color:var(--ink);display:block;font-size:14px;margin-bottom:3px}
+  .tblwrap{flex:1;overflow:hidden;display:flex;flex-direction:column}
+  table{border-collapse:collapse;width:100%;font-size:19px}
+  th{font-size:16.5px;text-align:left;padding:10px 12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);letter-spacing:.02em;white-space:nowrap}
+  td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:top;line-height:1.32}
+  td.case{font-weight:650;white-space:nowrap;color:var(--ink)}
+  td.exp{color:var(--muted);font-size:17px}
+  .cell{font-size:18px;line-height:1.3}
+  .mark{font-weight:800}
+  tr.verdict td{border-top:2px solid var(--line);font-weight:700;font-size:20px}
+  tr.verdict td b{font-family:var(--mono)}
+  tbody tr{cursor:pointer;transition:background .12s}
+  tbody tr:hover{background:rgba(255,255,255,.04)}
+  tbody tr.active{background:rgba(52,211,153,.10)}
+  #rowstory{margin-top:14px;border:1px solid rgba(52,211,153,.35);border-radius:12px;background:rgba(52,211,153,.07);padding:16px 22px;font-size:23px;line-height:1.4;min-height:58px}
+  #rowstory .empty{color:var(--dim)}
+  .legend{display:flex;gap:26px;margin-top:12px;font-size:17px;color:var(--muted)}
+  .legend .m{font-weight:800}
+  /* ---------- slide 8 money ---------- */
+  .money{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;margin-top:44px}
+  .mcard{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:30px 32px}
+  .mcard .who{font-size:21px;color:var(--muted);margin-bottom:14px}
+  .mcard .amt{font-size:72px;font-weight:800;font-family:var(--mono);letter-spacing:-.02em}
+  .mcard .note{font-size:19px;color:var(--muted);margin-top:12px;line-height:1.4}
+  .mcard.hot{border-color:rgba(52,211,153,.45)}
+  .moneylines{margin-top:38px;display:flex;flex-direction:column;gap:16px}
+  .moneylines .line{font-size:27px;line-height:1.4}
+  /* ---------- slide 9 recommendation ---------- */
+  .recs{display:flex;flex-direction:column;gap:13px;margin-top:32px;flex:1}
+  .rec{display:grid;grid-template-columns:70px 1fr;gap:22px;align-items:start;padding:15px 24px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+  .rec .n{font-family:var(--mono);font-size:30px;font-weight:800;color:var(--green);line-height:1.1}
+  .rec .txt{font-size:24px;line-height:1.35}
+  .rec .txt small{display:block;color:var(--muted);font-size:19px;margin-top:4px}
+  .bottomline{margin-top:26px;font-size:28px;font-weight:650;text-align:center;color:var(--ink)}
+  .bottomline b{color:var(--green)}
+  /* ---------- slide 10 risks + close ---------- */
+  .risks{display:flex;flex-direction:column;gap:11px;margin-top:28px}
+  .risk{display:grid;grid-template-columns:1fr 1fr;gap:26px;padding:14px 22px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font-size:21px;line-height:1.35}
+  .risk .r1{color:var(--amber)}
+  .risk .r2{color:var(--muted)}
+  .risk .r2 b{color:var(--green);font-weight:600}
+  .qrow{margin-top:24px;display:flex;flex-direction:column;gap:10px}
+  .qrow .q{font-size:23px;line-height:1.4;color:var(--muted)}
+  .qrow .q b{color:var(--ink)}
+  .closeline{margin-top:30px;font-size:30px;font-weight:700}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+
+<div id="stage">
+
+  <!-- ============ 1 · PROBLEM ============ -->
+  <section class="slide active" id="s1" data-time="75s">
+    <div class="kicker">Con Edison Capstone · Use Case 3 · EV Charger Data</div>
+    <div class="psc">Missing. Inadequate.<br><span>Unusable.</span></div>
+    <div class="sub">The Public Service Commission's own words about the data behind Make-Ready, March 2026. Weeks later, the program was paused.</div>
+    <h1 style="font-size:44px;margin-bottom:18px">We have chosen the one problem where bad data already costs the company real money.</h1>
+    <div class="lead">The slice: a reconciliation agent. One charging record goes in — a clean, unambiguous version comes out, with a plain verdict:
+      <span class="g">ok</span> · <span class="a">fixed</span> · <span class="r">unresolved</span>.</div>
+    <div class="coverfoot">
+      <span class="chip">One Record In</span>
+      <span class="chip">One Clean Record out</span>
+      <span class="chip">When In Doubt: <span class="r">unresolved</span>, never a guess</span>
+    </div>
+    <aside class="notes"><div class="t">Notes · ≈75s</div>1) 开场不寒暄,直接念 PSC 原话。2) 解释为什么选 EV 数据:五个备选里唯一"烂数据已经让公司付出真金白银代价"的。3) 一句话定义切片:读一条记录→还一条干净的+三个判定词。4) 强调 unresolved 的分量:猜一条记录就是猜钱。翻页前停顿一拍。</aside>
+  </section>
+
+  <!-- ============ 2 · BACKGROUND ============ -->
+  <section class="slide" id="s2" data-time="60s">
+    <div class="kicker">Background research</div>
+    <h1>Six pairs of hands, nobody checking.</h1>
+    <div class="cols2">
+      <div class="chain">
+        <div class="node"><span class="dot"></span>Charging station <small>OCPP</small></div>
+        <div class="arr"></div>
+        <div class="node"><span class="dot"></span>Operator / CPO <small>OCPP</small></div>
+        <div class="arr"></div>
+        <div class="node"><span class="dot"></span>Aggregator <small>OCPI</small></div>
+        <div class="arr"></div>
+        <div class="node"><span class="dot"></span>Con Edison <small>quarterly reports</small></div>
+        <div class="arr"></div>
+        <div class="node"><span class="dot"></span>Joint Utilities</div>
+        <div class="arr"></div>
+        <div class="node"><span class="dot"></span>PSC <small>the regulator</small></div>
+      </div>
+      <div class="dirt">
+        <div class="row"><div class="k">We measured it — 252,383 public rows</div><div class="v">~1,000 rows: invalidity reason = <span class="r">"NULL"</span> (a real value written as the word for nothing)</div></div>
+        <div class="row"><div class="k">Timestamps</div><div class="v">19:10:54<span class="r">.0000000</span> — database leftovers, exported as text</div></div>
+        <div class="row"><div class="k">Status</div><div class="v">969 <span class="r">INVALID</span> · 44 ABORTED</div></div>
+      </div>
+    </div>
+    <div class="factband"><b>The surprising fact:</b> to restart Make-Ready, Con Edison must prove 90% of monthly data was submitted <b>every month since January 2024</b> — roughly <b>30 months of backfill</b>. No team can hand-clean that in time.</div>
+    <aside class="notes"><div class="t">Notes · ≈60s</div>1) 数据经过六层才到监管,每层都能改写,没有一层保证质量。2) 用公开数据证明烂是真实存在的:字面"NULL"、7 位小数、969 条 INVALID——不是我们编的。3) 惊人事实:重启要证明 2024 年 1 月以来每月 90% 数据已提交=30 个月积压。强调:这不是预算问题,是可行性问题。</aside>
+  </section>
+
+  <!-- ============ 3 · IDEATION ============ -->
+  <section class="slide" id="s3" data-time="60s">
+    <div class="kicker">Ideation process</div>
+    <h1>Five candidates. One survivor.</h1>
+    <div class="ideas">
+      <div class="idea dead"><div class="name">Solar-panel scanning</div><div class="why">No usable data source to test against</div></div>
+      <div class="idea dead"><div class="name">Manhole covers</div><div class="why">Homogeneous — the same problem repeats; teaches little</div></div>
+      <div class="idea dead"><div class="name">Open-ended "sky's the limit"</div><div class="why">Too vague to test rigorously</div></div>
+      <div class="idea dead"><div class="name">Field visual inspections</div><div class="why">Useful, but no testable data in reach</div></div>
+      <div class="idea win"><div class="name">EV charging data</div><div class="why">Regulatory teeth · public data available · <b>testable</b></div></div>
+    </div>
+    <div class="lead" style="margin-top:30px">Inside EV data, we chose <b>reconciliation</b> over site scoring and uptime analysis — because the regulator audits <i>data quality itself</i>, and the other jobs all depend on clean data that doesn't exist yet.</div>
+    <aside class="notes"><div class="t">Notes · ≈60s</div>1) 快过四个被划掉的,理由一句话。2) EV 数据胜出:监管牙齿+公开数据可测。3) 圈内再选:为什么是对账而不是站点评分/在线率分析——监管审的就是数据质量本身;另外两个都依赖还不存在的干净数据。4) 补一句:对账是少有的可以事先写标准答案、公平判分的 AI 任务。</aside>
+  </section>
+
+  <!-- ============ 4 · WHAT FAILED ============ -->
+  <section class="slide" id="s4" data-time="60s">
+    <div class="kicker">What failed</div>
+    <h1>Four breakdowns, four fixes.</h1>
+    <div class="fails">
+      <div class="fail"><div class="n">01</div><div class="what">The first pass fed all six records into a single message — the models fused them into one narrative, impossible to score.</div><div class="fix">Fix: <b>one record, one message</b>. The broken run stays in the repo as proof.</div></div>
+      <div class="fail"><div class="n">02</div><div class="what">In the rules-based pass, record 3 leaked into the session context of records 1–2.</div><div class="fix">Fix: <b>one record, one API call</b> — no record may ever see another.</div></div>
+      <div class="fail"><div class="n">03</div><div class="what">Strict rules made the model overcautious — it marked a routine record as unresolved for no real reason.</div><div class="fix">Fix: <b>an abstention cap</b> — fewer than 1 in 20 routine records may be flagged.</div></div>
+      <div class="fail"><div class="n">04</div><div class="what">The budget model invented a billing number, <span class="num">8.2 kWh</span>, where the answer key called for "unresolved".</div><div class="fix">Fix: <b>a rule layer outside the model</b> — any conflict forces unresolved, overriding whatever the model says.</div></div>
+    </div>
+    <div class="lead" style="margin-top:26px">We can only make this recommendation because of these failures — each one comes with a known, inexpensive fix.</div>
+    <aside class="notes"><div class="t">Notes · ≈60s</div>1) 这是课程要的诚实:失败照实讲。2) 四条:批量发送合并→逐条发;会话串味→隔离;过度弃权→弃权预算;便宜模型猜电量→规则层兜底。3) 收一句:没有这些失败,我们就没有资格给建议。</aside>
+  </section>
+
+  <!-- ============ 5 · SOLUTION SHAPE ============ -->
+  <section class="slide" id="s5" data-time="60s">
+    <div class="kicker">What survived — and what a fix actually looks like</div>
+    <h1>Throwing more people at cleanup isn't the answer.</h1>
+    <div class="flow">
+      <div class="step hot"><div class="t">AI processes every record</div><div class="d">individually · outputs a clean version + verdict + written rationale</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t">A rule layer has final say</div><div class="d">station lookup table · drift table · conflict ⇒ unresolved</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t">Humans handle only the flags</div><div class="d">unresolved queue (&lt;10%) + 1% spot-check</div></div>
+    </div>
+    <div class="solverow">
+      <div class="box"><b>No manual pre-cleaning.</b> Nobody hand-scrubs each record before the AI sees it — that approach can't scale to a 30-month backlog.</div>
+      <div class="box"><b>No full re-verification either.</b> Every record carries its own paper trail — the model writes down its reasoning — which doubles as the audit lineage a regulator would ask for.</div>
+    </div>
+    <div class="lead" style="margin-top:30px">The evidence: the frontier model scored a perfect <b>6 of 6</b> against a locked, pre-written answer key — including correctly abstaining on the one record where "I don't know" was the right call.</div>
+    <aside class="notes"><div class="t">Notes · ≈60s</div>1) 先立靶:解决方案不是"人清洗+AI+人核对"——那是商业上不可能的事,也是程序停摆的原因。2) 三格流程:AI 全量一遍过→规则层兜底→人只碰漏网之鱼+1%抽审。3) 两句话:没人预先清洗,没人全部复核;证据链=审计轨迹。4) 证据:旗舰模型 6/6,含诚实弃权。</aside>
+  </section>
+
+  <!-- ============ 6 · TESTING: EASY ============ -->
+  <section class="slide" id="s6" data-time="45s">
+    <div class="kicker">Testing — the easy case</div>
+    <h1>The answer key came first. Then we made it hurt.</h1>
+    <div class="easywrap">
+      <div class="rawbox">
+        <div class="lbl">Record 1 — a normal record wearing a confusing date</div>
+        <div class="rawline">03/01/2024 2:05 PM, Sta 12, 2.5, PAID</div>
+        <div class="modelchips">
+
+        </div>
+      </div>
+      <div>
+        <div class="expect">
+          <div class="e"><span class="k">Date</span>March 1, 2024 — not January 3</div>
+          <div class="e"><span class="k">Time</span>14:05, ISO 8601</div>
+          <div class="e"><span class="k">Energy</span>2.5 kWh, labeled</div>
+          <div class="e"><span class="k">Verdict</span><span class="g">ok</span> — nothing wrong</div>
+        </div>
+        <div class="verdictline">Every model cleaned it. Dates, times, units — no failures at this level.</div>
+      </div>
+    </div>
+    <aside class="notes"><div class="t">Notes · ≈45s</div>1) 方法一句话:答案 key 先写、先锁,模型后跑——判分公平的保证。2) 易例:日期歧义+站名缩写,三个模型全对。3) 小瑕疵:站名各编各的——这是字典问题,不是智商问题。4) 转折:基线立住之后,上极端病例。</aside>
+  </section>
+
+  <!-- ============ 7 · TESTING: THE TABLE ============ -->
+  <section class="slide" id="s7" data-time="90s">
+    <div class="kicker">Testing — the extreme cases · the whole test on one page</div>
+    <h1 style="font-size:44px">Six records. Four runs. One verdict each.</h1>
+    <div class="casestrip">
+      <div class="c"><b>1</b>confusing date</div>
+      <div class="c"><b>2</b>same session, 2nd system</div>
+      <div class="c"><b>3</b>junk decimals</div>
+      <div class="c"><b>4</b>clock +7h</div>
+      <div class="c"><b>5</b>energy 10.0 vs 8.2</div>
+      <div class="c"><b>6</b>broken row "NULL"</div>
+    </div>
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>Case</th><th>Expected</th><th>Claude · plain</th><th>Gemini · plain</th><th>Kimi · plain</th><th>Claude · rules</th></tr></thead>
+        <tbody>
+          <tr data-story="Every model cleaned record 1; three invented their own station code. A dictionary problem, not an intelligence problem.">
+            <td class="case">1</td><td class="exp">Mar 1, 14:05 · 2.5 · ok</td>
+            <td class="cell"><span class="mark g">✓</span> values right, station coded "STA-12"</td>
+            <td class="cell"><span class="mark a">△</span> values right, station left raw</td>
+            <td class="cell"><span class="mark a">△</span> values right, station = "12"</td>
+            <td class="cell"><span class="mark r">✗</span> verdict "unresolved" — missing end time</td>
+          </tr>
+          <tr data-story="The same session from a second system: everyone recognized it except Gemini, who never connected the two records.">
+            <td class="case">2</td><td class="exp">same session · 14:05–15:32 · ok</td>
+            <td class="cell"><span class="mark g">✓</span> duplicate recognized</td>
+            <td class="cell"><span class="mark a">△</span> times right, no connection</td>
+            <td class="cell"><span class="mark g">✓</span> duplicate recognized</td>
+            <td class="cell"><span class="mark g">✓</span> resolved</td>
+          </tr>
+          <tr data-story="Junk decimals cut by everyone. The rules run lost the record entirely — it decided record 3 was 'another copy' of records 1–2's session. A conversation leak, our fault.">
+            <td class="case">3</td><td class="exp">19:10:54–20:22:54 · 8.1 · ok</td>
+            <td class="cell"><span class="mark g">✓</span> decimals cut, flagged</td>
+            <td class="cell"><span class="mark a">△</span> times right, no flag</td>
+            <td class="cell"><span class="mark a">△</span> times right, no flag</td>
+            <td class="cell"><span class="mark r">✗</span> wrong session's times</td>
+          </tr>
+          <tr data-story="Clock drift: corrected by everyone except Gemini, who listed both sessions side by side and called it a day.">
+            <td class="case">4</td><td class="exp">keep 14:05, drop 21:05 · fixed</td>
+            <td class="cell"><span class="mark g">✓</span> corrected</td>
+            <td class="cell"><span class="mark r">✗</span> no correction</td>
+            <td class="cell"><span class="mark g">✓</span> corrected</td>
+            <td class="cell"><span class="mark g">✓</span> corrected</td>
+          </tr>
+          <tr data-story="The money conflict: Claude abstained both times — the key's answer. Kimi picked 8.2 kWh: a guess about a billing figure. Gemini listed both values but never said 'unresolved'.">
+            <td class="case">5</td><td class="exp"><span class="r">unresolved</span> — no guessing</td>
+            <td class="cell"><span class="mark g">✓</span> abstained, listed both</td>
+            <td class="cell"><span class="mark a">△</span> listed both, no verdict</td>
+            <td class="cell"><span class="mark r">✗</span> <b>picked 8.2 kWh</b></td>
+            <td class="cell"><span class="mark g">✓</span> abstained</td>
+          </tr>
+          <tr data-story="The broken row: everyone quarantined it. Gemini gets a half-mark — it guessed what 34 and 35 mean instead of saying it didn't know.">
+            <td class="case">6</td><td class="exp">broken → hand to a person · unresolved</td>
+            <td class="cell"><span class="mark g">✓</span> quarantined, "NULL" called out</td>
+            <td class="cell"><span class="mark a">△</span> kept INVALID, guessed 34/35</td>
+            <td class="cell"><span class="mark g">✓</span> quarantined, mismatches flagged</td>
+            <td class="cell"><span class="mark g">✓</span> quarantined, everything flagged</td>
+          </tr>
+          <tr class="verdict"><td>Verdict</td><td>—</td><td><span class="g">6 / 6</span></td><td><span class="a">0 full</span> · 5 partial</td><td><span class="r">5 / 6</span> · one dangerous fail</td><td><span class="a">4 / 6</span> usable</td></tr>
+        </tbody>
+      </table>
+      <div id="rowstory"><span class="empty">Click any row for the one-line story.</span></div>
+      <div class="legend"><span><span class="mark g">✓</span> matches the key</span><span><span class="mark a">△</span> mostly right, deviation</span><span><span class="mark r">✗</span> wrong in a way that matters</span></div>
+    </div>
+    <aside class="notes"><div class="t">Notes · ≈90s · 全场中心</div>1) 先解释表怎么读:行=记录,列=模型跑法,✓△✗=对/勉强/错。2) 逐行讲,重点停在第 5 行:钱对不上时 Claude 两次都说不知道;便宜模型猜了 8.2——这句要讲慢。3) 第 3 行主动认领:规则版串味是我们的锅。4) 最后一行收:6/6 · 0 全对 · 5/6 · 4/6。5) 互动:点行看一句话故事(翻页前可点 2-3 行)。</aside>
+  </section>
+
+  <!-- ============ 8 · MONEY ============ -->
+  <section class="slide" id="s8" data-time="45s">
+    <div class="kicker">The money story</div>
+    <h1>The model is the cheap part.</h1>
+    <div class="money">
+      <div class="mcard"><div class="who">Baseline · Claude · 6 records</div><div class="amt">$1.63</div><div class="note">≈ $0.27 per record, at frontier-model default settings</div></div>
+      <div class="mcard"><div class="who">Eval A · Kimi K3 (open) · 6 records</div><div class="amt">$0.21</div><div class="note">7.6× cheaper — and wrong exactly once, on the one record where a guess is a billing error</div></div>
+      <div class="mcard hot"><div class="who">The real cost</div><div class="amt" style="font-size:44px;line-height:1.2">1 analyst hour<br>≈ $50</div><div class="note">more than all six records, every run, combined</div></div>
+    </div>
+    <div class="moneylines">
+      <div class="line">The cheap model is only cheap <b>if nobody checks its work</b> — and it's the one that guessed.</div>
+      <div class="line">Human review is the real expense. <b>Spend it only on the records that genuinely need it.</b></div>
+    </div>
+    <aside class="notes"><div class="t">Notes · ≈45s</div>1) 三个数字:$1.63 / $0.21 / 一小时人工≈$50。2) 结论一:便宜模型只有在没人检查时才便宜,而它唯一犯错的地方就是猜钱。3) 结论二:真正的成本是人工审核,所以人只该碰真正需要人的记录。</aside>
+  </section>
+
+  <!-- ============ 9 · RECOMMENDATION ============ -->
+  <section class="slide" id="s9" data-time="90s">
+    <div class="kicker">What we recommend Con Edison do</div>
+    <h1 style="font-size:46px">Six instructions, straight.</h1>
+    <div class="recs">
+      <div class="rec"><div class="n">1</div><div class="txt">Put this pipeline in place as the cleaning path for quarterly reporting <b>and the backfill</b>.<small>Model cost ≈ $0.27/record measured — tens of thousands against the value of restarting the program; the manual path cannot meet the deadline at all.</small></div></div>
+      <div class="rec"><div class="n">2</div><div class="txt">Use the frontier-class model, <b>not the cheapest</b>.<small>The cheap model was 7.6× cheaper and wrong exactly once — on the billing-conflict record.</small></div></div>
+      <div class="rec"><div class="n">3</div><div class="txt">Enforce the rules <b>in code</b>, not in the model's good intentions.<small>Station dictionary · drift table · energy conflict ⇒ unresolved, always.</small></div></div>
+      <div class="rec"><div class="n">4</div><div class="txt">Use the per-record evidence trail <b>as the audit trail</b>.<small>The model already writes down why — that is regulator-ready lineage, produced on every row.</small></div></div>
+      <div class="rec"><div class="n">5</div><div class="txt">Spend people where they add value: <b>the flagged queue + a 1% audit</b>.<small>Nobody pre-cleans. Nobody re-checks everything. Those two things are what would make this commercially impossible.</small></div></div>
+      <div class="rec"><div class="n">6</div><div class="txt">Turn the six-record answer key into a <b>standing regression test</b>.<small>Any model or prompt change must pass the six records before it ships.</small></div></div>
+    </div>
+    <div class="bottomline">The alternative isn't AI versus people. It's <b>an automated cleaner</b> versus <b>a program that stays paused</b>.</div>
+    <aside class="notes"><div class="t">Notes · ≈90s · 全场落点</div>1) 六条直接指令,每条一句主句+一句小字证据。2) 第 1 条是商业核心:这是唯一能赶在截止日前完成 30 个月回填的路。3) 第 2、3 条回扣测试证据:别买最便宜的;规则写死在代码里。4) 第 5 条直接回应"人工不可能":人只碰漏网之鱼。5) 收尾大句:不是 AI 对人,是自动化对"程序继续停摆"。</aside>
+  </section>
+
+  <!-- ============ 10 · RISKS + CLOSE ============ -->
+  <section class="slide" id="s10" data-time="60s">
+    <div class="kicker">What could go wrong — and what we'd do about it</div>
+    <h1 style="font-size:44px">We asked it the same way we asked the models.</h1>
+    <div class="risks">
+      <div class="risk"><div class="r1">Silent wrong answers — the Kimi failure, repeated</div><div class="r2">Rule-checker outside the model + <b>1% audit sample</b>; the regression test is the tripwire.</div></div>
+      <div class="risk"><div class="r1">The unresolved queue floods</div><div class="r2"><b>Abstention budget</b>: under 1 in 20 ordinary records flagged; if it stays high, the prompt gets recalibrated, not shipped.</div></div>
+      <div class="risk"><div class="r1">The station dictionary and drift table may not exist yet</div><div class="r2">Build them from exports and site records as <b>step one of the pilot</b>; every unmapped name is a flag, never a guess.</div></div>
+      <div class="risk"><div class="r1">Real data may not look like our six records — ours are synthetic</div><div class="r2">Run a <b>one-month pilot beside the current process</b>, a person adjudicating every flag, before it becomes the process.</div></div>
+      <div class="risk"><div class="r1">Models drift under the same name</div><div class="r2">The <b>six-record regression test</b> exists precisely for this.</div></div>
+    </div>
+    <div class="qrow">
+      <div class="q"><b>To move forward, we need three things:</b></div>
+      <div class="q">1 · Which energy figure is authoritative when records disagree — the charger's, the settlement's, or neither?</div>
+      <div class="q">2 · How many real records carry conflicts like record 5, and how long does a person spend on one today?</div>
+      <div class="q">3 · A de-identified sample — even 100 rows — to check whether our test records look like the real mess.</div>
+    </div>
+    <div class="closeline">The prototype works. <span class="g">The next step needs real data.</span></div>
+    <aside class="notes"><div class="t">Notes · ≈60s</div>1) 风险照实讲,每条都配对策——这不是免责声明,是设计的一部分。2) 特别说明:六条测试记录是合成的,没见过 Con Ed 内部数据,所以第一步是并行的一个月试点。3) 三个问题收尾,落点:原型可行,下一步要真数据。4) 致谢,结束。</aside>
+  </section>
+
+  <!-- ============ 11 · CLOSING ============ -->
+  <section class="slide" id="s11" data-time="40s">
+    <div class="kicker">Closing · what the evidence supports</div>
+    <h1 style="font-size:52px">The evidence supports: <span class="g">continue a limited test.</span></h1>
+    <div class="lead" style="margin-top:30px">Not a roll-out. A <b>one-month pilot</b> running beside the current process — a person adjudicates every flag, and the six-record answer key becomes a standing regression test. If the pilot holds, we scale. If it doesn't, we recalibrate.</div>
+    <div class="qrow" style="margin-top:42px">
+      <div class="q"><b>To start the pilot, we need three answers from you</b> — which energy figure is authoritative, how many real records carry conflicts, and a de-identified sample of even 100 rows.</div>
+    </div>
+    <div class="closeline" style="margin-top:42px">We'd like to run that pilot. <span class="g">Thank you — and we welcome your questions.</span></div>
+    <aside class="notes"><div class="t">Notes · ≈40s · 你的 closing</div>1) 判定说清楚:证据支持的是"继续有限测试",不是全面上线——这是课程要求的四选一判定。2) 一个月试点:并行跑、人裁决每个 flag、答案 key 变常驻回归测试;成立就扩,不成立就重调。3) 三个问题(上一页)是启动试点的钥匙,这里收成一句。4) 致谢,邀请提问,结束。停一拍再翻页。</aside>
+  </section>
+
+</div>
+
+<div id="notes"></div>
+<button class="navbtn" id="prev" title="Previous (←)">←</button>
+<button class="navbtn" id="next" title="Next (→)">→</button>
+<div id="hint">← → navigate · N notes · F fullscreen</div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var cur = 0;
+  var KEY = 'coned-demo-slide';
+  try{ cur = Math.min(slides.length-1, parseInt(localStorage.getItem(KEY)||'0',10)||0); }catch(e){}
+
+  function scale(){
+    var s = Math.min(window.innerWidth/1920, window.innerHeight/1080);
+    document.getElementById('stage').style.transform =
+      'translate(-50%,-50%) scale('+s+')';
+  }
+  function show(n, persist){
+    cur = Math.max(0, Math.min(slides.length-1, n));
+    slides.forEach(function(sl,i){ sl.classList.toggle('active', i===cur); });
+    document.getElementById('bar').style.width = ((cur+1)/slides.length*100)+'%';
+    document.getElementById('prev').style.opacity = cur===0 ? .25 : 1;
+    document.getElementById('next').style.opacity = cur===slides.length-1 ? .25 : 1;
+    if(persist!==false){ try{ localStorage.setItem(KEY, cur); }catch(e){} }
+  }
+  function notes(){
+    var el = document.getElementById('notes');
+    var n = slides[cur].querySelector('.notes');
+    if(!n){ el.classList.remove('show'); return; }
+    el.innerHTML = n.innerHTML;
+    el.classList.add('show');
+  }
+  function toggleNotes(){
+    var el = document.getElementById('notes');
+    el.classList.toggle('show');
+    if(el.classList.contains('show')) notes();
+  }
+  document.addEventListener('keydown', function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){ e.preventDefault(); show(cur+1); }
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); show(cur-1); }
+    else if(e.key==='n'||e.key==='N'){ toggleNotes(); }
+    else if(e.key==='f'||e.key==='F'){ if(document.fullscreenEnabled) document.documentElement.requestFullscreen(); }
+    else if(e.key==='Home'){ show(0); }
+    else if(e.key==='End'){ show(slides.length-1); }
+  });
+  document.getElementById('prev').addEventListener('click', function(){ show(cur-1); });
+  document.getElementById('next').addEventListener('click', function(){ show(cur+1); });
+
+  // table row stories (slide 7)
+  var rows = document.querySelectorAll('#s7 tbody tr[data-story]');
+  var storyEl = document.getElementById('rowstory');
+  rows.forEach(function(tr){
+    tr.addEventListener('click', function(){
+      rows.forEach(function(r){ r.classList.remove('active'); });
+      tr.classList.add('active');
+      storyEl.innerHTML = '<b>'+tr.children[0].textContent+'.</b> '+tr.getAttribute('data-story');
+    });
+  });
+
+  // slide 7: auto-show first row story when arriving, for demo friendliness
+  var lastShown = -1;
+  var origShow = show;
+  show = function(n,p){ origShow(n,p); if(n===6 && lastShown!==6){ lastShown=6; var r=rows[0]; r.click(); } };
+
+  window.addEventListener('resize', scale);
+  scale();
+  show(cur, false);
+})();
+</script>
+</body>
+</html>
