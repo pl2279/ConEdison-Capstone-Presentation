@@ -30,12 +30,6 @@
   .timechip{position:absolute;bottom:34px;right:96px;font-size:17px;color:var(--dim);font-family:var(--mono);letter-spacing:.08em}
   .slidenum{position:absolute;bottom:34px;left:96px;font-size:17px;color:var(--dim);font-family:var(--mono);letter-spacing:.08em}
   /* progress */
-  #bar{position:fixed;top:0;left:0;height:4px;background:var(--green);width:10%;z-index:50;transition:width .2s}
-  /* notes */
-  #notes{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);width:1500px;max-height:300px;overflow:auto;background:#111827;border:1px solid var(--line);border-radius:14px;padding:22px 28px;font-size:20px;line-height:1.5;color:#D7DEE8;display:none;z-index:60;box-shadow:0 24px 60px rgba(0,0,0,.55)}
-  .slide .notes{display:none}
-  #notes.show{display:block}
-  #notes .t{color:var(--green);font-size:15px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px;font-weight:600}
   /* arrows */
   .navbtn{position:fixed;bottom:30px;z-index:55;width:52px;height:52px;border-radius:50%;border:1px solid var(--line);background:rgba(15,20,30,.85);color:var(--ink);font-size:22px;cursor:pointer;transition:background .15s}
   .navbtn:hover{background:#1a2333}
@@ -46,7 +40,7 @@
     #stage{position:static;transform:none;width:auto}
     .slide{position:relative;opacity:1;pointer-events:auto;width:1920px;height:1080px;page-break-after:always;background:#fff;color:#111}
     .slide .kicker{color:#059669} .g{color:#059669} .r{color:#dc2626} .a{color:#b45309}
-    #bar,#notes,.navbtn,#hint,.timechip{display:none}
+    #bar,.navbtn,#hint,.timechip{display:none}
   }
   /* ---------- slide 1 cover ---------- */
   #s1{justify-content:center}
@@ -163,7 +157,8 @@
 
   <!-- ============ 1 · PROBLEM ============ -->
   <section class="slide active" id="s1" data-time="75s">
-    <div class="kicker">Con Edison Capstone · Use Case 3 · EV Charger Data</div>
+    <div class="kicker">NYU Stern × Con Edison Capstone · Generative AI Product Prototype</div>
+    <div style="font-size:18px;color:var(--muted);margin-bottom:16px">My contribution: Product strategy · Research · Model evaluation · Prototyping</div>
     <div class="psc">Missing. Inadequate.<br><span>Unusable.</span></div>
     <div class="sub">The Public Service Commission's own words about the data behind Make-Ready, March 2026. Weeks later, the program was paused.</div>
     <h1 style="font-size:44px;margin-bottom:18px">We have chosen the one problem where bad data already costs the company real money.</h1>
@@ -174,7 +169,6 @@
       <span class="chip">One Clean Record out</span>
       <span class="chip">When In Doubt: <span class="r">unresolved</span>, never a guess</span>
     </div>
-    <aside class="notes"><div class="t">Notes · ≈75s</div>1) 开场不寒暄,直接念 PSC 原话。2) 解释为什么选 EV 数据:五个备选里唯一"烂数据已经让公司付出真金白银代价"的。3) 一句话定义切片:读一条记录→还一条干净的+三个判定词。4) 强调 unresolved 的分量:猜一条记录就是猜钱。翻页前停顿一拍。</aside>
   </section>
 
   <!-- ============ 2 · BACKGROUND ============ -->
@@ -202,7 +196,6 @@
       </div>
     </div>
     <div class="factband"><b>The surprising fact:</b> to restart Make-Ready, Con Edison must prove 90% of monthly data was submitted <b>every month since January 2024</b> — roughly <b>30 months of backfill</b>. No team can hand-clean that in time.</div>
-    <aside class="notes"><div class="t">Notes · ≈60s</div>1) 数据经过六层才到监管,每层都能改写,没有一层保证质量。2) 用公开数据证明烂是真实存在的:字面"NULL"、7 位小数、969 条 INVALID——不是我们编的。3) 惊人事实:重启要证明 2024 年 1 月以来每月 90% 数据已提交=30 个月积压。强调:这不是预算问题,是可行性问题。</aside>
   </section>
 
   <!-- ============ 3 · IDEATION ============ -->
@@ -217,7 +210,6 @@
       <div class="idea win"><div class="name">EV charging data</div><div class="why">Regulatory teeth · public data available · <b>testable</b></div></div>
     </div>
     <div class="lead" style="margin-top:30px">Inside EV data, we chose <b>reconciliation</b> over site scoring and uptime analysis — because the regulator audits <i>data quality itself</i>, and the other jobs all depend on clean data that doesn't exist yet.</div>
-    <aside class="notes"><div class="t">Notes · ≈60s</div>1) 快过四个被划掉的,理由一句话。2) EV 数据胜出:监管牙齿+公开数据可测。3) 圈内再选:为什么是对账而不是站点评分/在线率分析——监管审的就是数据质量本身;另外两个都依赖还不存在的干净数据。4) 补一句:对账是少有的可以事先写标准答案、公平判分的 AI 任务。</aside>
   </section>
 
   <!-- ============ 4 · WHAT FAILED ============ -->
@@ -231,7 +223,6 @@
       <div class="fail"><div class="n">04</div><div class="what">The budget model invented a billing number, <span class="num">8.2 kWh</span>, where the answer key called for "unresolved".</div><div class="fix">Fix: <b>a rule layer outside the model</b> — any conflict forces unresolved, overriding whatever the model says.</div></div>
     </div>
     <div class="lead" style="margin-top:26px">We can only make this recommendation because of these failures — each one comes with a known, inexpensive fix.</div>
-    <aside class="notes"><div class="t">Notes · ≈60s</div>1) 这是课程要的诚实:失败照实讲。2) 四条:批量发送合并→逐条发;会话串味→隔离;过度弃权→弃权预算;便宜模型猜电量→规则层兜底。3) 收一句:没有这些失败,我们就没有资格给建议。</aside>
   </section>
 
   <!-- ============ 5 · SOLUTION SHAPE ============ -->
@@ -250,7 +241,6 @@
       <div class="box"><b>No full re-verification either.</b> Every record carries its own paper trail — the model writes down its reasoning — which doubles as the audit lineage a regulator would ask for.</div>
     </div>
     <div class="lead" style="margin-top:30px">The evidence: the frontier model scored a perfect <b>6 of 6</b> against a locked, pre-written answer key — including correctly abstaining on the one record where "I don't know" was the right call.</div>
-    <aside class="notes"><div class="t">Notes · ≈60s</div>1) 先立靶:解决方案不是"人清洗+AI+人核对"——那是商业上不可能的事,也是程序停摆的原因。2) 三格流程:AI 全量一遍过→规则层兜底→人只碰漏网之鱼+1%抽审。3) 两句话:没人预先清洗,没人全部复核;证据链=审计轨迹。4) 证据:旗舰模型 6/6,含诚实弃权。</aside>
   </section>
 
   <!-- ============ 6 · TESTING: EASY ============ -->
@@ -275,7 +265,6 @@
         <div class="verdictline">Every model cleaned it. Dates, times, units — no failures at this level.</div>
       </div>
     </div>
-    <aside class="notes"><div class="t">Notes · ≈45s</div>1) 方法一句话:答案 key 先写、先锁,模型后跑——判分公平的保证。2) 易例:日期歧义+站名缩写,三个模型全对。3) 小瑕疵:站名各编各的——这是字典问题,不是智商问题。4) 转折:基线立住之后,上极端病例。</aside>
   </section>
 
   <!-- ============ 7 · TESTING: THE TABLE ============ -->
@@ -342,7 +331,6 @@
       <div id="rowstory"><span class="empty">Click any row for the one-line story.</span></div>
       <div class="legend"><span><span class="mark g">✓</span> matches the key</span><span><span class="mark a">△</span> mostly right, deviation</span><span><span class="mark r">✗</span> wrong in a way that matters</span></div>
     </div>
-    <aside class="notes"><div class="t">Notes · ≈90s · 全场中心</div>1) 先解释表怎么读:行=记录,列=模型跑法,✓△✗=对/勉强/错。2) 逐行讲,重点停在第 5 行:钱对不上时 Claude 两次都说不知道;便宜模型猜了 8.2——这句要讲慢。3) 第 3 行主动认领:规则版串味是我们的锅。4) 最后一行收:6/6 · 0 全对 · 5/6 · 4/6。5) 互动:点行看一句话故事(翻页前可点 2-3 行)。</aside>
   </section>
 
   <!-- ============ 8 · MONEY ============ -->
@@ -358,7 +346,6 @@
       <div class="line">The cheap model is only cheap <b>if nobody checks its work</b> — and it's the one that guessed.</div>
       <div class="line">Human review is the real expense. <b>Spend it only on the records that genuinely need it.</b></div>
     </div>
-    <aside class="notes"><div class="t">Notes · ≈45s</div>1) 三个数字:$1.63 / $0.21 / 一小时人工≈$50。2) 结论一:便宜模型只有在没人检查时才便宜,而它唯一犯错的地方就是猜钱。3) 结论二:真正的成本是人工审核,所以人只该碰真正需要人的记录。</aside>
   </section>
 
   <!-- ============ 9 · RECOMMENDATION ============ -->
@@ -374,7 +361,6 @@
       <div class="rec"><div class="n">6</div><div class="txt">Turn the six-record answer key into a <b>standing regression test</b>.<small>Any model or prompt change must pass the six records before it ships.</small></div></div>
     </div>
     <div class="bottomline">The alternative isn't AI versus people. It's <b>an automated cleaner</b> versus <b>a program that stays paused</b>.</div>
-    <aside class="notes"><div class="t">Notes · ≈90s · 全场落点</div>1) 六条直接指令,每条一句主句+一句小字证据。2) 第 1 条是商业核心:这是唯一能赶在截止日前完成 30 个月回填的路。3) 第 2、3 条回扣测试证据:别买最便宜的;规则写死在代码里。4) 第 5 条直接回应"人工不可能":人只碰漏网之鱼。5) 收尾大句:不是 AI 对人,是自动化对"程序继续停摆"。</aside>
   </section>
 
   <!-- ============ 10 · RISKS + CLOSE ============ -->
@@ -395,7 +381,6 @@
       <div class="q">3 · A de-identified sample — even 100 rows — to check whether our test records look like the real mess.</div>
     </div>
     <div class="closeline">The prototype works. <span class="g">The next step needs real data.</span></div>
-    <aside class="notes"><div class="t">Notes · ≈60s</div>1) 风险照实讲,每条都配对策——这不是免责声明,是设计的一部分。2) 特别说明:六条测试记录是合成的,没见过 Con Ed 内部数据,所以第一步是并行的一个月试点。3) 三个问题收尾,落点:原型可行,下一步要真数据。4) 致谢,结束。</aside>
   </section>
 
   <!-- ============ 11 · CLOSING ============ -->
@@ -407,15 +392,14 @@
       <div class="q"><b>To start the pilot, we need three answers from you</b> — which energy figure is authoritative, how many real records carry conflicts, and a de-identified sample of even 100 rows.</div>
     </div>
     <div class="closeline" style="margin-top:42px">We'd like to run that pilot. <span class="g">Thank you — and we welcome your questions.</span></div>
-    <aside class="notes"><div class="t">Notes · ≈40s · 你的 closing</div>1) 判定说清楚:证据支持的是"继续有限测试",不是全面上线——这是课程要求的四选一判定。2) 一个月试点:并行跑、人裁决每个 flag、答案 key 变常驻回归测试;成立就扩,不成立就重调。3) 三个问题(上一页)是启动试点的钥匙,这里收成一句。4) 致谢,邀请提问,结束。停一拍再翻页。</aside>
   </section>
 
 </div>
 
-<div id="notes"></div>
+
 <button class="navbtn" id="prev" title="Previous (←)">←</button>
 <button class="navbtn" id="next" title="Next (→)">→</button>
-<div id="hint">← → navigate · N notes · F fullscreen</div>
+<div id="hint">← → navigate · F fullscreen</div>
 
 <script>
 (function(){
@@ -437,22 +421,10 @@
     document.getElementById('next').style.opacity = cur===slides.length-1 ? .25 : 1;
     if(persist!==false){ try{ localStorage.setItem(KEY, cur); }catch(e){} }
   }
-  function notes(){
-    var el = document.getElementById('notes');
-    var n = slides[cur].querySelector('.notes');
-    if(!n){ el.classList.remove('show'); return; }
-    el.innerHTML = n.innerHTML;
-    el.classList.add('show');
-  }
-  function toggleNotes(){
-    var el = document.getElementById('notes');
-    el.classList.toggle('show');
-    if(el.classList.contains('show')) notes();
-  }
+  
   document.addEventListener('keydown', function(e){
     if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){ e.preventDefault(); show(cur+1); }
     else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); show(cur-1); }
-    else if(e.key==='n'||e.key==='N'){ toggleNotes(); }
     else if(e.key==='f'||e.key==='F'){ if(document.fullscreenEnabled) document.documentElement.requestFullscreen(); }
     else if(e.key==='Home'){ show(0); }
     else if(e.key==='End'){ show(slides.length-1); }
